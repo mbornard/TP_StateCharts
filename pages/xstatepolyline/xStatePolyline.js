@@ -21,7 +21,59 @@ const polylineMachine = createMachine(
         initial: "idle",
         states : {
             idle: {
+                on: {
+                    MOUSECLICK: {
+                        target: "drawing",
+                        actions: ["createLine"],
+                    },
+                }
+
+            },
+            drawing: {
+                on: {
+
+                     MOUSECLICK: [{
+                        target: "drawing",
+                        internal: true,
+                        actions: ["addPoint"],
+                        cond: "pasPlein"
+                    }, {
+                        target: "idle",
+                    }],
+
+                    MOUSEMOVE: {
+                        target: "drawing",
+                        internal: true,
+                        actions: ["setLastPoint"]
+                    },
+                    Backspace: [{
+                        target: "drawing",
+                        internal: true,
+                        actions: ["removeLastPoint"],
+                        cond: "plusDeDeuxPoints"
+                    }, {
+                        target: "drawing",
+                        internal: true
+                    }],
+
+                    Enter: [{
+                        target: "idle",
+                        internal: true,
+                        actions: ["saveLine"],
+                        cond: "plusDeDeuxPoints"
+
+                    }, {
+                        target: "drawing",
+                        internal: true
+                    }],
+                    Escape: {
+                        target: "idle",
+                        actions: ["abandon"]
+                    }
+
+                }
             }
+            
         }
     },
     // Quelques actions et guardes que vous pouvez utiliser dans votre machine
@@ -54,6 +106,7 @@ const polylineMachine = createMachine(
                 // Le dernier point(provisoire) ne fait pas partie de la polyline
                 const newPoints = currentPoints.slice(0, size - 2);
                 polyline.points(newPoints);
+                polyline.stroke("black");
                 layer.batchDraw();
             },
             // Ajouter un point à la polyline
@@ -86,7 +139,7 @@ const polylineMachine = createMachine(
             // On peut enlever un point
             plusDeDeuxPoints: (context, event) => {
                 // Deux coordonnées pour chaque point, plus le point provisoire
-                return polyline.points().length > 6;
+                return polyline.points().length >= 6;
             },
         },
     }
